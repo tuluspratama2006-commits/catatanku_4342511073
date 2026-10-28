@@ -4,17 +4,21 @@ import '../models/note.dart';
 import '../theme/app_theme.dart';
 import '../utils/date_format.dart';
 
-/// Kartu satu catatan pada daftar di Beranda.
+/// Kartu satu catatan (dipakai di Beranda dan Arsip).
 class NoteCard extends StatelessWidget {
   const NoteCard({
     super.key,
     required this.note,
     required this.onTap,
+    required this.onEdit,
+    required this.onArchive,
     required this.onDelete,
   });
 
   final Note note;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onArchive;
   final VoidCallback onDelete;
 
   @override
@@ -66,15 +70,25 @@ class NoteCard extends StatelessWidget {
                 icon: const Icon(Icons.more_vert_rounded,
                     color: AppColors.muted, size: 20),
                 onSelected: (value) {
-                  if (value == 'detail') {
-                    onTap();
-                  } else {
-                    onDelete();
+                  switch (value) {
+                    case 'detail':
+                      onTap();
+                    case 'edit':
+                      onEdit();
+                    case 'arsip':
+                      onArchive();
+                    case 'hapus':
+                      onDelete();
                   }
                 },
-                itemBuilder: (context) => const [
-                  PopupMenuItem(value: 'detail', child: Text('Lihat detail')),
-                  PopupMenuItem(value: 'hapus', child: Text('Hapus')),
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'detail', child: Text('Lihat detail')),
+                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  PopupMenuItem(
+                    value: 'arsip',
+                    child: Text(note.archived ? 'Kembalikan' : 'Arsipkan'),
+                  ),
+                  const PopupMenuItem(value: 'hapus', child: Text('Hapus')),
                 ],
               ),
             ],

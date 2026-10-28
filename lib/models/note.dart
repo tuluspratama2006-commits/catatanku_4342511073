@@ -15,6 +15,7 @@ enum NotePriority {
 }
 
 /// Model data satu catatan (hanya untuk keperluan tampilan UI).
+/// Objek bersifat immutable; perubahan dilakukan lewat [copyWith].
 class Note {
   const Note({
     required this.title,
@@ -24,6 +25,7 @@ class Note {
     required this.color,
     required this.priority,
     required this.icon,
+    this.archived = false,
   });
 
   final String title;
@@ -33,6 +35,29 @@ class Note {
   final NoteColor color;
   final NotePriority priority;
   final IconData icon;
+  final bool archived;
+
+  Note copyWith({
+    String? title,
+    String? content,
+    String? category,
+    DateTime? date,
+    NoteColor? color,
+    NotePriority? priority,
+    IconData? icon,
+    bool? archived,
+  }) {
+    return Note(
+      title: title ?? this.title,
+      content: content ?? this.content,
+      category: category ?? this.category,
+      date: date ?? this.date,
+      color: color ?? this.color,
+      priority: priority ?? this.priority,
+      icon: icon ?? this.icon,
+      archived: archived ?? this.archived,
+    );
+  }
 
   /// Ikon bawaan untuk catatan baru berdasarkan kategorinya.
   static IconData iconFor(String category) {

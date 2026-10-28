@@ -5,23 +5,56 @@ import '../theme/app_theme.dart';
 import '../utils/date_format.dart';
 import '../utils/ui_helpers.dart';
 import '../widgets/responsive_body.dart';
+import 'add_note_screen.dart';
 
 /// Halaman 5 - Detail Catatan: menampilkan isi catatan.
-/// Menghapus catatan mengembalikan `true` ke halaman Beranda.
-class NoteDetailScreen extends StatelessWidget {
-  const NoteDetailScreen({super.key, required this.note});
+/// Perubahan (edit, arsip, hapus) dikabarkan ke Beranda lewat callback.
+class NoteDetailScreen extends StatefulWidget {
+  const NoteDetailScreen({
+    super.key,
+    required this.note,
+    required this.onUpdate,
+    required this.onDelete,
+    required this.onToggleArchive,
+  });
 
   final Note note;
+  final void Function(Note old, Note updated) onUpdate;
+  final ValueChanged<Note> onDelete;
+  final ValueChanged<Note> onToggleArchive;
 
-  Future<void> _delete(BuildContext context) async {
+  @override
+  State<NoteDetailScreen> createState() => _NoteDetailScreenState();
+}
+
+class _NoteDetailScreenState extends State<NoteDetailScreen> {
+  late Note _note = widget.note;
+
+  Future<void> _edit() async {
+    final updated = await Navigator.of(context).push<Note>(
+      MaterialPageRoute(builder: (_) => AddNoteScreen(note: _note)),
+    );
+    if (updated == null || !mounted) return;
+    widget.onUpdate(_note, updated);
+    setState(() => _note = updated);
+    showInfo(context, 'Catatan berhasil diperbarui');
+  }
+
+  Future<void> _delete() async {
     final ok = await confirmDelete(context);
-    if (ok && context.mounted) {
-      Navigator.of(context).pop(true);
-    }
+    if (!ok || !mounted) return;
+    widget.onDelete(_note);
+    Navigator.of(context).pop();
+  }
+
+  void _toggleArchive() {
+    widget.onToggleArchive(_note);
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
+    final note = _note;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Catatan'),
@@ -29,13 +62,20 @@ class NoteDetailScreen extends StatelessWidget {
           IconButton(
             tooltip: 'Edit',
             icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
-            onPressed: () =>
-                showInfo(context, 'Fitur edit di luar lingkup tugas ini'),
+            onPressed: _edit,
+          ),
+          IconButton(
+            tooltip: note.archived ? 'Kembalikan' : 'Arsipkan',
+            icon: Icon(
+              note.archived ? Icons.unarchive_outlined : Icons.archive_outlined,
+              color: AppColors.muted,
+            ),
+            onPressed: _toggleArchive,
           ),
           IconButton(
             tooltip: 'Hapus',
             icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-            onPressed: () => _delete(context),
+            onPressed: _delete,
           ),
           const SizedBox(width: 4),
         ],
@@ -87,6 +127,8 @@ class NoteDetailScreen extends StatelessWidget {
                                   label: 'Prioritas ${note.priority.label}',
                                   color: note.color.accent,
                                 ),
+                                if (note.archived)
+                                  _Tag(label: 'Diarsipkan', color: AppColors.muted),
                               ],
                             ),
                           ],

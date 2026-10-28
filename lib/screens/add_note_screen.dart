@@ -5,15 +5,20 @@ import '../theme/app_theme.dart';
 import '../widgets/responsive_body.dart';
 
 /// Halaman 4 - Tambah Catatan: form input judul, isi, kategori, warna, prioritas.
-/// Saat "Simpan" ditekan, catatan dikirim kembali ke Beranda (tanpa database).
+/// Jika [note] diisi, halaman yang sama dipakai sebagai mode Edit Catatan.
+/// Saat "Simpan" ditekan, catatan dikirim kembali ke pemanggil (tanpa database).
 class AddNoteScreen extends StatefulWidget {
-  const AddNoteScreen({super.key});
+  const AddNoteScreen({super.key, this.note});
+
+  final Note? note;
 
   @override
   State<AddNoteScreen> createState() => _AddNoteScreenState();
 }
 
 class _AddNoteScreenState extends State<AddNoteScreen> {
+  static const String _emptyContent = '(Tidak ada isi catatan)';
+
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
@@ -22,6 +27,22 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
   bool _categoryError = false;
   NoteColor _color = AppColors.noteColors.first;
   NotePriority _priority = NotePriority.sedang;
+
+  bool get _isEdit => widget.note != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final note = widget.note;
+    if (note != null) {
+      _titleController.text = note.title;
+      _contentController.text =
+          note.content == _emptyContent ? '' : note.content;
+      _category = note.category;
+      _color = note.color;
+      _priority = note.priority;
+    }
+  }
 
   @override
   void dispose() {
@@ -65,24 +86,39 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     setState(() => _categoryError = _category == null);
     if (!valid || _category == null) return;
 
+    final title = _titleController.text.trim();
     final content = _contentController.text.trim();
-    Navigator.of(context).pop(
-      Note(
-        title: _titleController.text.trim(),
-        content: content.isEmpty ? '(Tidak ada isi catatan)' : content,
-        category: _category!,
-        date: DateTime.now(),
-        color: _color,
-        priority: _priority,
-        icon: Note.iconFor(_category!),
-      ),
-    );
+    final text = content.isEmpty ? _emptyContent : content;
+
+    final old = widget.note;
+    final result = old != null
+        // Mode edit: pertahankan tanggal & status arsip, ubah sisanya.
+        ? old.copyWith(
+            title: title,
+            content: text,
+            category: _category!,
+            color: _color,
+            priority: _priority,
+            icon: _category == old.category
+                ? old.icon
+                : Note.iconFor(_category!),
+          )
+        : Note(
+            title: title,
+            content: text,
+            category: _category!,
+            date: DateTime.now(),
+            color: _color,
+            priority: _priority,
+            icon: Note.iconFor(_category!),
+          );
+    Navigator.of(context).pop(result);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tambah Catatan')),
+      appBar: AppBar(title: Text(_isEdit ? 'Edit Catatan' : 'Tambah Catatan')),
       body: SafeArea(
         child: ResponsiveBody(
           child: SingleChildScrollView(
@@ -123,7 +159,10 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   const _FieldLabel('Prioritas'),
                   _buildPrioritySelector(),
                   const SizedBox(height: 28),
-                  FilledButton(onPressed: _save, child: const Text('Simpan')),
+                  FilledButton(
+                    onPressed: _save,
+                    child: Text(_isEdit ? 'Simpan Perubahan' : 'Simpan'),
+                  ),
                 ],
               ),
             ),

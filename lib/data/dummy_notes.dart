@@ -60,4 +60,16 @@ final List<Note> dummyNotes = [
     priority: NotePriority.rendah,
     icon: Icons.favorite_rounded,
   ),
+  Note(
+    title: 'Rencana Liburan',
+    content:
+        'Daftar tempat yang ingin dikunjungi saat libur semester: pantai, '
+        'kebun raya, dan museum kota. Cek jadwal dan anggaran terlebih dahulu.',
+    category: 'Pribadi',
+    date: DateTime(2026, 10, 10, 19, 30),
+    color: AppColors.green,
+    priority: NotePriority.rendah,
+    icon: Icons.favorite_rounded,
+    archived: true,
+  ),
 ];
